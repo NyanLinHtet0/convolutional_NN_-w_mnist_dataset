@@ -25,4 +25,5 @@ class Convolution():
         return output
     
 Convolution_instance = Convolution()
-print(Convolution_instance.forward(np.random.randn(10,10)))
+convu = Convolution_instance.forward(np.random.randn(10,10))
+print(np.maximum(0, convu))
