@@ -21,6 +21,7 @@ class Dense():
         for i in range(self.weights.shape[0]):
             for j in range(self.weights.shape[1]):
                 self.gradient[i,j] = output_gradient[i,0]* self.input_data[j,0]
-        return self.gradient
+        input_gradient = self.weights.T @ output_gradient
+        return input_gradient
         
 
