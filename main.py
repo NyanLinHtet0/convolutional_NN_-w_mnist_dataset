@@ -1,23 +1,34 @@
 import numpy as np
 from Convolution import *
 from Dense import *
+from Loss import *
 
 
-Convolution_instance = Convolution()
-convu = Convolution_instance.forward(np.random.randn(10,10))
+convolution_layer = Convolution((2,2),3)
+convu = convolution_layer.forward(np.random.randn(10,10))
 relu = np.maximum(0, convu)
-maxpooled = Convolution_instance.max_pool(relu)
-flattened = Convolution_instance.flatten(maxpooled)
+maxpooled = convolution_layer.max_pool(relu)
+flattened = convolution_layer.flatten(maxpooled)
 
 
-dense_instance = Dense()
+dense_layer = Dense(flattened.shape,(3,1))
+loss = Loss()
+output_layer = dense_layer.forward(flattened)
 
-print(dense_instance.weights.shape)
-print(flattened.shape)
-print(dense_instance.forward(flattened).shape)
+model_loss = loss.softmax_crossentropy(output_layer)
+
+output_gradient = loss.backward()
+dense_gradient = dense_layer.backward(output_gradient)
 
 
-# for convo in maxpooled:
+print(dense_gradient.shape)
+
+# for row in dense_gradient:
+#     for cell in row:
+#         print(f'{cell:.2f}', end=' ')
+#     print()
+
+# for convo in dense_gradient:
 #     for row in convo:
 #         for cell in row:
 #             print(f'{cell:.2f}', end=' ')

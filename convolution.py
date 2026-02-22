@@ -1,28 +1,30 @@
 import numpy as np
 
 class Convolution():
-    def __init__(self, kernel_shape = (2,2), num_kernels=1):
+    def __init__(self, kernel_shape = (2,2), num_kernels=3):
         self.kernel_shape = kernel_shape
         self.depth = num_kernels
         self.kernels = np.random.randn(num_kernels,*self.kernel_shape)
         self.biases = np.random.randn(num_kernels,1,1)
         
     def forward(self, input_data):
-        #input matrix shape (height, width)
         input_height, input_width = input_data.shape
-        #output matrix shape (num_kernels, output_height, output_width)
-        output_height = input_height
-        output_width = input_width
-        #create output matrix
+
+        pad = 1
+        kh, kw = self.kernel_shape
+
+        padded = np.pad(input_data, pad, mode='constant', constant_values=0)
+
+        output_height = input_height + 2*pad - kh + 1
+        output_width  = input_width  + 2*pad - kw + 1
+
         self.output_shape = (self.depth, output_height, output_width)
         output = np.zeros(self.output_shape)
-        #pad input data with zeroes around the borders
-        np.pad(input_data, 1, mode='constant', constant_values=0)
-        #perform convolution
+
         for k in range(self.output_shape[0]):
             for i in range(output_height):
                 for j in range(output_width):
-                    region = input_data[i:i+self.kernel_shape[0], j:j+self.kernel_shape[1]]
+                    region = padded[i:i+kh, j:j+kw]
                     output[k, i, j] = np.sum(region * self.kernels[k]) + self.biases[k, 0, 0]
         return output
 
