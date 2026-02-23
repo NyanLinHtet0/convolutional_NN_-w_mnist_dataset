@@ -1,4 +1,23 @@
 import numpy as np
+def compute_flatten_shape(image_inputsize,
+                          kernel_shape,
+                          num_kernels,
+                          pool_size,
+                          stride):
+
+    # convolution output
+    conv_height = (image_inputsize[0] + 2*1 - kernel_shape[0]) // 1 + 1
+    conv_width  = (image_inputsize[1] + 2*1 - kernel_shape[1]) // 1 + 1
+
+    # maxpool output
+    pool_height = (conv_height - pool_size[0]) // stride[0] + 1
+    pool_width  = (conv_width  - pool_size[1]) // stride[1] + 1
+
+    # flattened dimensions
+    f_height = num_kernels * pool_height * pool_width
+    f_width = 1
+
+    return (f_height, f_width)
 
 class Convolution():
     def __init__(self, kernel_shape = (3,3), num_kernels=3):
