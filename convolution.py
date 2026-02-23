@@ -125,20 +125,20 @@ class Convolution():
         # print("dl_dconv shape:", dl_dconv.shape)
         # print("input_shape:", self.padded.shape)
 
-        dl_dk = np.zeros_like(self.kernels)
-        dl_db = np.zeros_like(self.biases)
+        self.dl_dk = np.zeros_like(self.kernels)
+        self.dl_db = np.zeros_like(self.biases)
 
 
         # dl_db and dl_dk calculation
-        for k in range(dl_dk.shape[0]):
+        for k in range(self.dl_dk.shape[0]):
             # update bias gradient
-            dl_db[k] = np.sum(dl_dconv[k])
+            self.dl_db[k] = np.sum(dl_dconv[k])
             #  update kernel gradient
-            for a in range(dl_dk.shape[1]):
-                for b in range(dl_dk.shape[2]):
+            for a in range(self.dl_dk.shape[1]):
+                for b in range(self.dl_dk.shape[2]):
                     region_x = self.padded[a:a+dl_dconv.shape[1], b:b+dl_dconv.shape[2]]
                     region_dl_relu = dl_dconv[k]
-                    dl_dk[k,a,b] = np.sum(region_x * region_dl_relu)
+                    self.dl_dk[k,a,b] = np.sum(region_x * region_dl_relu)
 
         # Rotate kernels 180 degrees for convolution backward
         rotated_kernels = np.rot90(self.kernels, 2, axes=(1,2))
@@ -150,9 +150,12 @@ class Convolution():
             for i in range(dl_dconv.shape[1]):   
                 for j in range(dl_dconv.shape[2]):
                     input_gradient[i:i+kh, j:j+kw] += rotated_kernels[k] * dl_dconv[k, i, j]
-        pad = self.pad
-
+                    
         # udpate weights and biases
-        self.kernels -= learning_rate * dl_dk
-        self.biases  -= learning_rate * dl_db
+        self.update_weights()
+        pad = self.pad
         return input_gradient[pad:-pad, pad:-pad]
+    
+    def update_weights(self, learning_rate=0.01):
+        self.kernels -= learning_rate * self.dl_dk
+        self.biases  -= learning_rate * self.dl_db
