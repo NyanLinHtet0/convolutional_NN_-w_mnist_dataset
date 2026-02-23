@@ -7,49 +7,69 @@ class Convolution():
         self.kernels = np.random.randn(num_kernels,*self.kernel_shape)
         self.biases = np.random.randn(num_kernels,1,1)
         
-    def forward(self, input_data):
+    def forward(self, input_data, pad = 1):
         input_height, input_width = input_data.shape
 
-        pad = 1
+        self.pad = pad
         kh, kw = self.kernel_shape
 
-        padded = np.pad(input_data, pad, mode='constant', constant_values=0)
-        output_height = input_height + 2*pad - kh + 1
-        output_width  = input_width  + 2*pad - kw + 1
-        print(padded.shape)
-        self.output_shape = (self.depth, output_height, output_width)
-        output = np.zeros(self.output_shape)
-        print(f'output shape: {output.shape}')
-        for k in range(self.output_shape[0]):
+        self.padded = np.pad(input_data, self.pad, mode='constant', constant_values=0)
+        output_height = input_height + 2*self.pad - kh + 1
+        output_width  = input_width  + 2*self.pad - kw + 1
+        self.conv_out_shape = (self.depth, output_height, output_width)
+        output = np.zeros(self.conv_out_shape)
+
+        for k in range(self.conv_out_shape[0]):
             for i in range(output_height):
                 for j in range(output_width):
-                    region = padded[i:i+kh, j:j+kw]
+                    region = self.padded[i:i+kh, j:j+kw]
                     output[k, i, j] = np.sum(region * self.kernels[k]) + self.biases[k, 0, 0]
+        # save pre-ReLU values
+        self.pre_relu = output.copy()
+
+        # mask from pre-ReLU (values > 0)
+        self.relu_mask = (self.pre_relu > 0).astype(int)
+
+        # apply ReLU
+        output = np.maximum(0, output)
+
         return output
 
     def max_pool(self, input_data, pool_size=(2,2), stride=(2,2)):
-        #input matrix shape (num_kernels, height, width)
+        # input matrix shape (num_kernels, height, width)
         num_kernels, input_height, input_width = input_data.shape
-        #output matrix shape (num_kernels, output_height, output_width)
-        output_height = input_height // pool_size[0]
-        output_width = input_width // pool_size[1]
-        #create output matrix
-        self.output_shape = (num_kernels, output_height, output_width)
-        output = np.zeros(self.output_shape)
-        #mask matrix for backward pass
+
+        ph, pw = pool_size
+        sh, sw = stride
+
+        # save for backward
+        self.pool_size = pool_size
+        self.pool_stride = stride
+
+        # output matrix shape (num_kernels, output_height, output_width)
+        output_height = (input_height - ph) // sh + 1
+        output_width  = (input_width  - pw) // sw + 1
+
+        # create output matrix (POOL output shape)
+        self.pool_out_shape = (num_kernels, output_height, output_width)
+        output = np.zeros(self.pool_out_shape)
+
+        # mask matrix for backward pass
         self.max_mask = np.zeros_like(input_data)
-        #perform max pooling
+        # perform max pooling
         for k in range(num_kernels):
             for i in range(output_height):
                 for j in range(output_width):
-                    region = input_data[k, i*pool_size[0]:(i+1)*pool_size[0], j*pool_size[1]:(j+1)*pool_size[1]]
+                    r0 = i*sh
+                    c0 = j*sw
+                    region = input_data[k, r0:r0+ph, c0:c0+pw]
                     output[k, i, j] = np.max(region)
                     # find index inside region
                     max_idx = np.unravel_index(np.argmax(region), region.shape)
 
                     # convert local index → global index
-                    global_i = i*pool_size[0] + max_idx[0]
-                    global_j = j*pool_size[1] + max_idx[1]
+                    global_i = r0 + max_idx[0]
+                    global_j = c0 + max_idx[1]
                     # store mask
                     self.max_mask[k, global_i, global_j] = 1
         return output
@@ -59,16 +79,61 @@ class Convolution():
         return output
     
     def backward(self, output_gradient, learning_rate=0.01):    
-        #unflatten the output gradient
-        output_gradient = output_gradient.reshape(self.output_shape)
+        # unflatten the output gradient into POOL output shape
+        output_gradient = output_gradient.reshape(self.pool_out_shape)
 
-        # gradient to pass down: same shape as pre-pool input (same as mask)
-        input_gradient = np.zeros_like(self.max_mask)
+        ph, pw = self.pool_size
+        sh, sw = self.pool_stride
 
+        # gradient to pass down
+        dl_drelu = np.zeros_like(self.max_mask)
+
+        # fill dl_drelu using the max_mask and output_gradient
+        for k in range(self.max_mask.shape[0]):
+            for i in range(output_gradient.shape[1]):
+                for j in range(output_gradient.shape[2]):
+                    r0 = i*sh
+                    c0 = j*sw
+                    region = self.max_mask[k, r0:r0+ph, c0:c0+pw]
+                    dl_drelu[k, r0:r0+ph, c0:c0+pw] = region * output_gradient[k, i, j]
+
+        # calculate dl_dconv by applying ReLU mask to dl_drelu
+        dl_dconv = dl_drelu * self.relu_mask
+
+        # (Optional debug)
+        # print("killed grads:", np.sum((dl_drelu != 0) & (self.relu_mask == 0)))
+
+        # print("dl_dconv shape:", dl_dconv.shape)
+        # print("input_shape:", self.padded.shape)
+
+        dl_dk = np.zeros_like(self.kernels)
+        dl_db = np.zeros_like(self.biases)
+
+
+        # dl_db and dl_dk calculation
+        for k in range(dl_dk.shape[0]):
+            # update bias gradient
+            dl_db[k] = np.sum(dl_dconv[k])
+            #  update kernel gradient
+            for a in range(dl_dk.shape[1]):
+                for b in range(dl_dk.shape[2]):
+                    region_x = self.padded[a:a+dl_dconv.shape[1], b:b+dl_dconv.shape[2]]
+                    region_dl_relu = dl_dconv[k]
+                    dl_dk[k,a,b] = np.sum(region_x * region_dl_relu)
+
+        # Rotate kernels 180 degrees for convolution backward
+        rotated_kernels = np.rot90(self.kernels, 2, axes=(1,2))
+        # initialize input gradient
+        input_gradient = np.zeros_like(self.padded)
+        # calculate input gradient using dl_dconv and rotated kernels
+        kh, kw = self.kernels.shape[1], self.kernels.shape[2]
         for k in range(self.depth):
-            for i in range(output_gradient.shape[1]):      # pooled height (5)
-                for j in range(output_gradient.shape[2]):  # pooled width  (5)
-                    region = self.max_mask[k, i*2:(i+1)*2, j*2:(j+1)*2]
-                    input_gradient[k, i*2:(i+1)*2, j*2:(j+1)*2] = region * output_gradient[k, i, j]
+            for i in range(dl_dconv.shape[1]):   
+                for j in range(dl_dconv.shape[2]):
+                    input_gradient[i:i+kh, j:j+kw] += rotated_kernels[k] * dl_dconv[k, i, j]
+        pad = self.pad
 
-        return input_gradient
+        # udpate weights and biases
+        self.kernels -= learning_rate * dl_dk
+        self.biases  -= learning_rate * dl_db
+        return input_gradient[pad:-pad, pad:-pad]

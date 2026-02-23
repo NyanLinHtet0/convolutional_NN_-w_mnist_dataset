@@ -3,11 +3,10 @@ from convolution import *
 from Dense import *
 from Loss import *
 
-np.random.seed(100)
-convolution_layer = Convolution((3,3),1)
+np.random.seed(1)
+convolution_layer = Convolution((3,3),2)
 convu = convolution_layer.forward(np.random.randn(10,10))
-relu = np.maximum(0, convu)
-maxpooled = convolution_layer.max_pool(relu)
+maxpooled = convolution_layer.max_pool(convu)
 flattened = convolution_layer.flatten(maxpooled)
 
 
@@ -22,18 +21,13 @@ dense_gradient = dense_layer.backward(output_gradient)
 convolution_gradient = convolution_layer.backward(dense_gradient)
 
 
-for kernel in convolution_layer.max_mask:
-    for row in kernel:
-        for cell in row:
-            print(f'{cell:.2f}', end=' ')
-        print()
-    print()
-for kernel in convolution_gradient:
-    for row in kernel:
-        for cell in row:
-            print(f'{cell:.2f}', end=' ')
-        print()
-    print()
+
+# # for kernel in convolution_gradient:
+# for row in convolution_gradient:
+#     for cell in row:
+#         print(f'{cell:.2f}', end=' ')
+#     print()
+# print()
 
 # for convo in dense_gradient:
 #     for row in convo:

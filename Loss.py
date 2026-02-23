@@ -11,8 +11,8 @@ class Loss():
         softmax_array = np.asarray(self.soft_max)
         self.label_prob = np.asarray(label_prob).reshape(softmax_array.shape)
         softmax_array = np.clip(softmax_array, eps, 1.0)  # to avoid log(0)
-        loss = -np.sum(self.label_prob * np.log(softmax_array))
-        return loss
+        self.loss = -np.sum(self.label_prob * np.log(softmax_array))
+        return self.loss
     
     def backward(self):
         return np.asarray(self.soft_max-self.label_prob)

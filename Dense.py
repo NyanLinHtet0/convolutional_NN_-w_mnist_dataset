@@ -20,8 +20,18 @@ class Dense():
 
         for i in range(self.weights.shape[0]):
             for j in range(self.weights.shape[1]):
-                self.gradient[i,j] = output_gradient[i,0]* self.input_data[j,0]
+                self.gradient[i, j] = output_gradient[i, 0] * self.input_data[j, 0]
+
+        # bias gradient (same shape as biases)
+        self.bias_gradient = output_gradient
+
+        # gradient to pass to previous layer
         input_gradient = self.weights.T @ output_gradient
+
+        # update weights and biases
+        self.weights -= learning_rate * self.gradient
+        self.biases  -= learning_rate * self.bias_gradient
+
         return input_gradient
         
 
