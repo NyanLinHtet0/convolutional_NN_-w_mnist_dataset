@@ -37,4 +37,7 @@ class Dense():
         self.weights -= learning_rate * self.gradient
         self.biases  -= learning_rate * self.bias_gradient
         
+    #--------------------------MODEL LOADING AND SAVING METHODS -------------------------------
+    def return_weights(self):
+        return self.weights
 

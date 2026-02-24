@@ -159,3 +159,10 @@ class Convolution():
     def update_weights(self, learning_rate=0.01):
         self.kernels -= learning_rate * self.dl_dk
         self.biases  -= learning_rate * self.dl_db
+
+    #--------------------------MODEL LOADING AND SAVING METHODS -------------------------------
+    def return_kernels(self):
+        return self.kernels
+    
+    def return_biases(self):
+        return self.biases

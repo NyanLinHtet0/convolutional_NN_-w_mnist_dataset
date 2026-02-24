@@ -30,8 +30,17 @@ flatten_shape = compute_flatten_shape(
                 )
 
 dp = DataPipeline(root_dir="Data") 
-x_train, y_train = dp.load_split("train", target_size=(10,10))
+
+# x_train, y_train = dp.load_and_npz_save("train", target_size=image_inputsize)
+
+
+data = np.load('train_10x10_dataset.npz')
+x_train = data['images']
+y_train = data['labels']
+
+
 indices = np.random.permutation(x_train.shape[0])
+
 # Initialize layers and loss
 convolution_layer = Convolution(kernel_shape, num_kernels)
 dense_layer = Dense(flatten_shape,output_size)
