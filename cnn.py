@@ -71,7 +71,7 @@ class CNN:
         return batch_loss_avg, dense_gradient_avg, convu_gradient_avg
     
     # Stochastic Gradient Descent training method
-    def train_SGD(self, x_train, y_train, epochs=10):
+    def train_SGD(self, x_train, y_train, epochs=10, learning_rate=0.01):
         loss_history = []
         indices = np.random.permutation(x_train.shape[0])
         for epoch in range(epochs):
@@ -92,7 +92,7 @@ class CNN:
 
                 # backpropagation
                 self.backward(label)
-                self.update_parameters()
+                self.update_parameters(learning_rate=learning_rate)
 
             epoch_loss_avg = epoch_loss_sum / x_train.shape[0]
             loss_history.append(epoch_loss_avg)

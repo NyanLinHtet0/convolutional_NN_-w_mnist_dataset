@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 import numpy as np
 from PIL import Image
+
 class DataPipeline:
     def __init__(self, root_dir="Data", exts=(".png",)):
         self.root_dir = Path(root_dir)
@@ -43,3 +44,5 @@ class DataPipeline:
         
         np.savez(f'{split}_{X.shape[1]}x{X.shape[2]}_dataset.npz', images=X, labels=y)
         return X, y
+    
+# x_train, y_train = dp.load_and_npz_save("train", target_size=image_inputsize)

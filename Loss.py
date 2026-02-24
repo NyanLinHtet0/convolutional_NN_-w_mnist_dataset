@@ -22,3 +22,6 @@ class Loss():
     def backward(self):
         return np.asarray(self.soft_max-self.label_prob)
     
+
+
+    
