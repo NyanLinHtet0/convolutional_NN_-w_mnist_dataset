@@ -98,3 +98,5 @@ class CNN:
             loss_history.append(epoch_loss_avg)
             print("avg loss:", epoch_loss_avg)
         return loss_history
+    
+

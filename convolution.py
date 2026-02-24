@@ -159,8 +159,8 @@ class Convolution():
     def return_biases(self):
         return self.biases
     
-    def load_kernels(self, kernels):
+    def set_parameters(self, kernels, biases):
         self.kernels = kernels
-
-    def load_biases(self, biases):
         self.biases = biases
+        self.dl_dk = np.zeros_like(self.kernels)
+        self.dl_db = np.zeros_like(self.biases)

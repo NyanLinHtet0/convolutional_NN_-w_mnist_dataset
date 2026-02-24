@@ -43,8 +43,8 @@ class Dense():
     def return_biases(self):
         return self.biases
 
-    def load_weights(self, weights):
+    def set_parameters(self, weights, biases):
         self.weights = weights
-    
-    def load_biases(self, biases):
         self.biases = biases
+        self.gradient = np.zeros_like(self.weights)
+        self.bias_gradient = np.zeros_like(self.biases)
