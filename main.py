@@ -36,7 +36,7 @@ y_train = data['labels']
 # Initialize CNN model
 np.random.seed(2)
 cnn_model = CNN(image_inputsize, kernel_shape, num_kernels, pool_size, stride, output_size)
-loss_history = cnn_model.train(x_train, y_train, epochs=10)
+loss_history = cnn_model.train_SGD(x_train, y_train, epochs=10)
 
 
 
