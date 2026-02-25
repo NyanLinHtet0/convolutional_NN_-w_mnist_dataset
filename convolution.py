@@ -165,7 +165,5 @@ class Convolution():
         self.dl_dk = np.zeros_like(self.kernels)
         self.dl_db = np.zeros_like(self.biases)
 
-    def get_gradient_parameters_avg(self, batch_size):
-        self.dl_dk /= batch_size
-        self.dl_db /= batch_size
+    def get_gradient_parameters(self):
         return (self.dl_dk, self.dl_db)

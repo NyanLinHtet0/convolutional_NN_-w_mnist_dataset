@@ -1,5 +1,5 @@
 import numpy as np
-from convolution import *
+from Convolution import *
 from Dense import *
 from Loss import *
 from Data_pipeline import *

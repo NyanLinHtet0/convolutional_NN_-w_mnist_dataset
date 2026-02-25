@@ -49,7 +49,5 @@ class Dense():
         self.gradient = np.zeros_like(self.weights)
         self.bias_gradient = np.zeros_like(self.biases)
 
-    def get_gradient_parameters_avg(self, batch_size):
-        self.gradient /= batch_size
-        self.bias_gradient /= batch_size
+    def get_gradient_parameters(self):
         return (self.gradient, self.bias_gradient)
