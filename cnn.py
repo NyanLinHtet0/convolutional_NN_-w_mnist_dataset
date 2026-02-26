@@ -44,28 +44,6 @@ class CNN:
         self.convolution_layer.set_parameters(conv_kernels, conv_biases)
         self.dense_layer.set_parameters(dense_weights, dense_biases)
 
-    def train_mini_batch(self, x_train, y_train, multi_core = True, learning_rate=0.01):
-        loss_sum = 0.0
-        for i in range(x_train.shape[0]):
-            # input data and label
-            label = y_train[i]
-            input_data = x_train[i]
-            # Forward pass
-            self.forward(input_data)
-            # calculate loss
-            model_loss = self.calculate_loss(label)
-            loss_sum += float(model_loss)
-            # backpropagation
-            self.backward(label)
-            if not multi_core:
-                self.update_parameters(learning_rate=learning_rate)
-            
-
-        dense_gradient = self.dense_layer.get_gradient_parameters()
-        convu_gradient = self.convolution_layer.get_gradient_parameters()
-
-        return loss_sum, convu_gradient, dense_gradient
-    
     # Stochastic Gradient Descent training method
     def train_SGD(self, x_train, y_train, epochs=10, learning_rate=0.01):
         loss_history = []

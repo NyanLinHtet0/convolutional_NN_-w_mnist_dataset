@@ -4,11 +4,7 @@ from Dense import *
 from Loss import *
 from Data_pipeline import *
 from cnn import CNN
-from Cnn_worker import *
-from Cnn_multi_core import CNNMultiCore
 import matplotlib.pyplot as plt
-from Cnn_worker import CNN_worker  # your file
-import multiprocessing as mp
 # from Mnist_data import *
 
 
@@ -54,27 +50,19 @@ def main():
     epochs = 10
     learning_rate = 0.01
 
-    cnn_multicore = CNNMultiCore(
-        image_inputsize=image_inputsize,
-        output_size=output_size,
-        kernel_shape=kernel_shape,
-        num_kernels=num_kernels,
-        pool_size=pool_size,
-        stride=stride
-    )
-
-    cnn_multicore.train_batches(
+    loss_history = cnn.train_SGD(
         x_train=x_train,
         y_train=y_train,
         epochs=epochs,
+        learning_rate=learning_rate
     )
-    print(x_train.shape)
-    # # ---------- Plot ----------
-    # plt.plot(loss_history)
-    # plt.xlabel("Epoch")
-    # plt.ylabel("Loss")
-    # plt.title("Training Loss")
-    # plt.show()
+
+    # ---------- Plot ----------
+    plt.plot(loss_history)
+    plt.xlabel("Epoch")
+    plt.ylabel("Loss")
+    plt.title("Training Loss")
+    plt.show()
 
 
 if __name__ == "__main__":
