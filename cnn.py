@@ -39,11 +39,15 @@ class CNN:
     def update_parameters(self, learning_rate=0.01):
         self.dense_layer.update_parameters(learning_rate)
         self.convolution_layer.update_parameters(learning_rate)
+        
+    def update_parameters_with_grad(self, grad, learning_rate = 0.01):
+        self.convolution_layer.update_parameters_with_grad(learning_rate, grad[0])
+        self.dense_layer.update_parameters_with_grad(learning_rate,grad[1])
 
     def set_parameters(self, conv_kernels, conv_biases, dense_weights, dense_biases):
         self.convolution_layer.set_parameters(conv_kernels, conv_biases)
         self.dense_layer.set_parameters(dense_weights, dense_biases)
-
+        
     # Stochastic Gradient Descent training method
     def train_SGD(self, x_train, y_train, epochs=10, learning_rate=0.01):
         loss_history = []

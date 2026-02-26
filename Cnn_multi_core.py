@@ -5,12 +5,9 @@ import multiprocessing as mp
 from Cnn_worker import CNN_worker
 
 def _run_worker_job(args):
-    (image_inputsize, kernel_shape, num_kernels, pool_size, stride, output_size,
-     x_train, y_train, idx_arr, lr, conv_k, conv_b, dense_w, dense_b) = args
-
-    w = CNN_worker(image_inputsize, kernel_shape, num_kernels, pool_size, stride, output_size)
-    w.set_parameters(conv_k, conv_b, dense_w, dense_b)
-    return w.train_mini_batch(x_train, y_train, idx_arr, learning_rate=lr) + (idx_arr.shape[0],)
+    (worker, x_train, y_train, idx_arr, lr, conv_k, conv_b, dense_w, dense_b) = args
+    worker.set_parameters(conv_k, conv_b, dense_w, dense_b)
+    return worker.train_mini_batch(x_train, y_train, idx_arr, learning_rate=lr) + (idx_arr.shape[0],)
 
 class CNNMultiCore(CNN):
     def train_batches(self,
@@ -47,7 +44,7 @@ class CNNMultiCore(CNN):
 
             # master parameters to sync to workers
             conv_k = self.convolution_layer.kernels
-            conv_b = self.convolution_layer.bias
+            conv_b = self.convolution_layer.biases
             dense_w = self.dense_layer.weights
             dense_b = self.dense_layer.biases
 
@@ -74,19 +71,26 @@ class CNNMultiCore(CNN):
             conv_b_grad_sum = np.zeros_like(conv_b)
             dense_w_grad_sum = np.zeros_like(dense_w)
             dense_b_grad_sum = np.zeros_like(dense_b)
-            for conv_k_grad, conv_b_grad, dense_w_grad, dense_b_grad, num_samples in results:
-                conv_k_grad_sum += conv_k_grad
-                conv_b_grad_sum += conv_b_grad
-                dense_w_grad_sum += dense_w_grad
-                dense_b_grad_sum += dense_b_grad
+            loss_sum = 0
+            for loss, conv_param, dense_param, num_samples in results:
+                loss_sum += loss
+                conv_k_grad_sum += conv_param[0]
+                conv_b_grad_sum +=  conv_param[1]
+                dense_w_grad_sum += dense_param[0]
+                dense_b_grad_sum += dense_param[1]
                 total_samples += num_samples
             # average gradients
             conv_k_grad_avg = conv_k_grad_sum / total_samples
             conv_b_grad_avg = conv_b_grad_sum / total_samples
             dense_w_grad_avg = dense_w_grad_sum / total_samples
             dense_b_grad_avg = dense_b_grad_sum / total_samples
+            
+            conv_param = (conv_k_grad_avg, conv_b_grad_avg)
+            dense_param = (dense_w_grad_avg, dense_b_grad_avg)
+            
+            self.set_parameters(self, conv_kernels, conv_biases, dense_weights, dense_biases)
             # update main model parameters
             
             self.update_parameters(learning_rate=learning_rate)
-            break
+            
         return
