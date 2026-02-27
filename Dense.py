@@ -35,6 +35,12 @@ class Dense():
         self.biases  -= learning_rate * self.bias_gradient
         self.gradient = np.zeros_like(self.weights)
         self.bias_gradient = np.zeros_like(self.biases)
+    
+    def update_parameters_with_grad(self, grad, learning_rate=0.01):
+        self.weights -= learning_rate * grad[0]
+        self.biases  -= learning_rate * grad[1]
+        self.gradient = np.zeros_like(self.weights)
+        self.bias_gradient = np.zeros_like(self.biases)
         
     #--------------------------MODEL LOADING AND SAVING METHODS -------------------------------
     def return_weights(self):

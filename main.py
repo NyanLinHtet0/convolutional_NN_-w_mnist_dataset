@@ -30,13 +30,10 @@ def main():
 
     # ---------- Model hyperparams ----------
     image_inputsize = (10, 10)
-
+    num_kernels = 5
     kernel_shape = (3, 3)
-    num_kernels = 2
-
     pool_size = (2, 2)
     stride = (2, 2)
-
     #Output classes
     output_size = (2, 1)
 
@@ -51,8 +48,7 @@ def main():
     )
 
     # ---------- Train ----------
-    epochs = 10
-    learning_rate = 0.01
+
 
     cnn_multicore = CNNMultiCore(
         image_inputsize=image_inputsize,
@@ -62,15 +58,73 @@ def main():
         pool_size=pool_size,
         stride=stride
     )
+    #training parameters
+    epochs = 10
+    learning_rate = 0.01
 
-    cnn_multicore.train_batches(
-        x_train=x_train,
-        y_train=y_train,
-        epochs=epochs,
+
+    # loss_history = cnn_multicore.train_batches(
+    #     x_train=x_train,
+    #     y_train=y_train,
+    #     epochs=epochs,
+    #     mini_batch_size=4,
+    #     learning_rate=learning_rate
+    # )
+
+    # conv_k, conv_b, dense_w, dense_b = cnn_multicore.get_parameters()
+    # np.savez(
+    # f'trained_parameters_{num_kernels}xkernels_input{image_inputsize}.npz',
+    # conv_kernels=conv_k,
+    # conv_biases=conv_b,
+    # dense_weights=dense_w,
+    # dense_biases=dense_b
+    # )
+
+    loaded_param = np.load(f'trained_parameters_{num_kernels}xkernels_input{image_inputsize}.npz')
+    conv_k = loaded_param['conv_kernels']
+    conv_b = loaded_param['conv_biases']
+    dense_w = loaded_param['dense_weights']
+    dense_b = loaded_param['dense_biases']
+
+    #load parameters
+    cnn_multicore.set_parameters(
+        conv_kernels=conv_k,
+        conv_biases=conv_b,
+        dense_weights=dense_w,
+        dense_biases=dense_b
     )
-    print(x_train.shape)
+
+    test_sample = np.load('test_10x10_dataset.npz')
+    x_test = test_sample['images']
+    y_test = test_sample['labels']
+    count = 0
+    idx_arr = []
+    for i in range(len(x_test)):
+        pred_label = cnn_multicore.predict(x_test[i])
+        if pred_label == y_test[i]:
+            count += 1
+        else:
+            idx_arr.append(i)
+
+    max_show = 10
+    wrong_to_show = idx_arr[:max_show]
+
+    plt.figure(figsize=(10, 5))
+
+    for j, i in enumerate(wrong_to_show):
+        plt.subplot(2, 5, j + 1)
+        plt.imshow(x_test[i], cmap="gray")
+        plt.title(f"T:{y_test[i]} P:{cnn_multicore.predict(x_test[i])}")
+        plt.axis("off")
+
+    plt.suptitle("First 10 Wrong Predictions")
+    plt.tight_layout()
+    plt.show()
+    accuracy = count / len(x_test)
+    print(f"Test Accuracy: {accuracy:.2%}")
+
     # # ---------- Plot ----------
-    # plt.plot(loss_history)
+    # plt.plot(loss_history[0])
     # plt.xlabel("Epoch")
     # plt.ylabel("Loss")
     # plt.title("Training Loss")
@@ -79,10 +133,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-
-
-
-
-

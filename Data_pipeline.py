@@ -44,5 +44,7 @@ class DataPipeline:
         
         np.savez(f'{split}_{X.shape[1]}x{X.shape[2]}_dataset.npz', images=X, labels=y)
         return X, y
-    
-# x_train, y_train = dp.load_and_npz_save("train", target_size=image_inputsize)
+
+dp = DataPipeline(root_dir="Data")
+image_inputsize = (10, 10)
+x_train, y_train = dp.load_and_npz_save("test", target_size=image_inputsize)

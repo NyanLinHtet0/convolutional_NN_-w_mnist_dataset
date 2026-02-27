@@ -152,7 +152,11 @@ class Convolution():
         self.dl_dk = np.zeros_like(self.kernels)
         self.dl_db = np.zeros_like(self.biases)
         
-    def update_parameters(self,)
+    def update_parameters_with_grad(self, grad, learning_rate=0.01):
+        self.kernels -= learning_rate * grad[0]
+        self.biases  -= learning_rate * grad[1]
+        self.dl_dk = np.zeros_like(self.kernels)
+        self.dl_db = np.zeros_like(self.biases)
 
     #--------------------------MODEL LOADING AND SAVING METHODS -------------------------------
     def return_kernels(self):
