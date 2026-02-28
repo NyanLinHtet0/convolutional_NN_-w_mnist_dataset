@@ -53,5 +53,5 @@ MnistDataloader_instance = MnistDataloader(
 )
 
 
-# (x_train, y_train), (x_test, y_test) = MnistDataloader_instance.load_data()
-# print(y_train[:10])
+(x_train, y_train), (x_test, y_test) = MnistDataloader_instance.load_data()
+print(y_train[:10])

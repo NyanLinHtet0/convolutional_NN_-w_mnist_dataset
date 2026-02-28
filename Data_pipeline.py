@@ -44,10 +44,15 @@ class DataPipeline:
         X = np.stack(X).astype(np.float32)     # (N, H, W)
         y = np.array(y)
         
-        np.savez(f'{split}_{X.shape[1]}x{X.shape[2]}_dataset.npz', images=X, labels=y)
+        np.savez(f'{split}_{X.shape[1]}x{X.shape[2]}_dataset_ysize={max_class}.npz', images=X, labels=y)
         return X, y
+
+    
 
 dp = DataPipeline(root_dir="Data")
 image_inputsize = (10, 10)
-dp.load_and_npz_save("test", target_size=image_inputsize, max_class=4)
-dp.load_and_npz_save(target_size=image_inputsize, max_class=4)
+# dp.load_and_npz_save("test", target_size=image_inputsize, max_class=4)
+# dp.load_and_npz_save(target_size=image_inputsize, max_class=4)
+dp.load_and_npz_save("test_indiv", target_size=image_inputsize, max_class=4)
+
+

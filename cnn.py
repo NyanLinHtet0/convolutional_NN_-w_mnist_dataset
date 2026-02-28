@@ -2,7 +2,6 @@ import numpy as np
 from Convolution import *
 from Dense import *
 from Loss import *
-from Data_pipeline import *
 import matplotlib.pyplot as plt
 
 class CNN:

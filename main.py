@@ -21,21 +21,21 @@ from cnn import CNN
 def main():
     # ---------- Reproducibility (optional) ----------
     np.random.seed(2)
+    # ---------- Load data ----------
+    output_class = 4
+    data = np.load(f'train_10x10_dataset_ysize={output_class}.npz')
+    x_train = data['images']
+    y_train = data['labels']
+    # print(f"Training data shape: {x_train.shape}, Training labels shape: {y_train.shape}")
 
     # ---------- Model hyperparams ----------
     image_inputsize = (10, 10)
-    num_kernels = 5
+    num_kernels = 10
     kernel_shape = (3, 3)
     pool_size = (2, 2)
     stride = (2, 2)
     #Output classes
-    output_size = (4, 1)
-
-    # ---------- Load data ----------
-    data = np.load('train_10x10_dataset.npz')
-    x_train = data['images']
-    y_train = data['labels']
-    # print(f"Training data shape: {x_train.shape}, Training labels shape: {y_train.shape}")
+    output_size = (y_train.max()+1, 1)
 
     # ---------- Train ----------
     cnn_multicore = CNNMultiCore(
@@ -46,30 +46,27 @@ def main():
         pool_size=pool_size,
         stride=stride
     )
+    # #training parameters
+    # epochs = 30
+    # learning_rate = 0.01
 
 
+    # loss_history = cnn_multicore.train_batches(
+    #     x_train=x_train,
+    #     y_train=y_train,
+    #     epochs=epochs,
+    #     mini_batch_size=64,
+    #     learning_rate=learning_rate
+    # )
 
-    #training parameters
-    epochs = 10
-    learning_rate = 0.01
-
-
-    loss_history = cnn_multicore.train_batches(
-        x_train=x_train,
-        y_train=y_train,
-        epochs=epochs,
-        mini_batch_size=64,
-        learning_rate=learning_rate
-    )
-
-    conv_k, conv_b, dense_w, dense_b = cnn_multicore.get_parameters()
-    np.savez(
-    f'trained_parameters_{num_kernels}xkernels_input{image_inputsize}.npz',
-    conv_kernels=conv_k,
-    conv_biases=conv_b,
-    dense_weights=dense_w,
-    dense_biases=dense_b
-    )
+    # # conv_k, conv_b, dense_w, dense_b = cnn_multicore.get_parameters()
+    # # np.savez(
+    # # f'trained_parameters_{num_kernels}xkernels_input{image_inputsize}_ysize={output_class}.npz',
+    # # conv_kernels=conv_k,
+    # # conv_biases=conv_b,
+    # # dense_weights=dense_w,
+    # # dense_biases=dense_b
+    # # )
 
     loaded_param = np.load(f'trained_parameters_{num_kernels}xkernels_input{image_inputsize}.npz')
     conv_k = loaded_param['conv_kernels']
@@ -85,7 +82,7 @@ def main():
         dense_biases=dense_b
     )
 
-    test_sample = np.load('test_10x10_dataset.npz')
+    test_sample = np.load('test_indiv_10x10_dataset_ysize=4.npz')
     x_test = test_sample['images']
     y_test = test_sample['labels']
     count = 0
@@ -94,8 +91,10 @@ def main():
         pred_label = cnn_multicore.predict(x_test[i])
         if pred_label == y_test[i]:
             count += 1
+            # idx_arr.append(i)
         else:
             idx_arr.append(i)
+            pass
 
     max_show = 10
     wrong_to_show = idx_arr[:max_show]
@@ -115,11 +114,11 @@ def main():
     print(f"Test Accuracy: {accuracy:.2%}")
 
     # # ---------- Plot ----------
-    plt.plot(loss_history[0])
-    plt.xlabel("Epoch")
-    plt.ylabel("Loss")
-    plt.title("Training Loss")
-    plt.show()
+    # # plt.plot(loss_history[0])
+    # plt.xlabel("Epoch")
+    # plt.ylabel("Loss")
+    # plt.title("Training Loss")
+    # plt.show()
 
 
 if __name__ == "__main__":
