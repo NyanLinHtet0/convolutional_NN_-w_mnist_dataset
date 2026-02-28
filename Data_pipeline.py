@@ -15,13 +15,15 @@ class DataPipeline:
         )
     
     
-    def load_and_npz_save(self, split="train", target_size=None, normalize=True):
+    def load_and_npz_save(self, split="train", target_size=None, max_class=None,normalize=True):
         split_path = self.root_dir / split
         class_folders = sorted([p for p in split_path.iterdir() if p.is_dir()],
                                key=lambda p: p.name)
         X = []
         y = []
 
+        if max_class is not None:
+            class_folders = class_folders[:max_class]
         for label, folder in enumerate(class_folders):
             images = self._list_images(folder)
 
@@ -39,7 +41,7 @@ class DataPipeline:
                 X.append(arr)
                 y.append(label)
 
-        X = np.stack(X)   # (N, H, W)
+        X = np.stack(X).astype(np.float32)     # (N, H, W)
         y = np.array(y)
         
         np.savez(f'{split}_{X.shape[1]}x{X.shape[2]}_dataset.npz', images=X, labels=y)
@@ -47,4 +49,5 @@ class DataPipeline:
 
 dp = DataPipeline(root_dir="Data")
 image_inputsize = (10, 10)
-x_train, y_train = dp.load_and_npz_save("test", target_size=image_inputsize)
+dp.load_and_npz_save("test", target_size=image_inputsize, max_class=4)
+dp.load_and_npz_save(target_size=image_inputsize, max_class=4)

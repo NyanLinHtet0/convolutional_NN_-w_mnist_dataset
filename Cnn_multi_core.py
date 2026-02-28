@@ -31,19 +31,28 @@ class CNNMultiCore(CNN):
         
         epoch_loss_history = []
         
-        for epoch in range(epochs):
-            print(f"Epoch {epoch+1}/{epochs}")
-            epoch_loss_sum = 0
-            epoch_samples = 0 
-            # shuffle indices for each epoch
-            indices = np.random.permutation(np.arange(x_train.shape[0]))  
-
-            with ctx.Pool(
+        with ctx.Pool(
                 processes=num_workers,
                 initializer=worker_init,
-                initargs=(x_train, y_train),
+                initargs=(
+                    x_train,
+                    y_train,
+                    image_inputsize,
+                    self.convolution_layer.kernel_shape,
+                    self.convolution_layer.depth,
+                    self.pool_size,
+                    self.stride,
+                    self.output_size
+                )
             ) as pool:
-            
+            for epoch in range(epochs):
+                print(f"Epoch {epoch+1}/{epochs}")
+                epoch_loss_sum = 0
+                epoch_samples = 0 
+                # shuffle indices for each epoch
+                indices = np.random.permutation(np.arange(x_train.shape[0]))  
+
+                
                 for start in range(0, len(indices), batch_size):
                     batch_indices = indices[start:start + batch_size]
                     if batch_indices.size == 0:
@@ -111,7 +120,9 @@ class CNNMultiCore(CNN):
                     # accumulate epoch stats
                     epoch_loss_sum += loss_sum
                     epoch_samples += total_samples
-            epoch_loss_history.append(epoch_loss_sum / epoch_samples)
-            print(f"Epoch {epoch+1} Loss: {epoch_loss_history[-1]:.4f}")
+                epoch_loss_history.append(epoch_loss_sum / epoch_samples)
+                print(f"Epoch {epoch+1} Loss: {epoch_loss_history[-1]:.4f}")
+            
+        
 
         return epoch_loss_history, batch_loss_history

@@ -4,7 +4,7 @@ from Dense import Dense
 from Loss import Loss
 from cnn import CNN
 
-
+GLOBAL_WORKER = None
 GLOBAL_X = None
 GLOBAL_Y = None
 
@@ -23,10 +23,30 @@ def _run_worker_job(args):
         dense_b,
         lr
     ) = args
+    GLOBAL_WORKER.set_parameters(conv_k, conv_b, dense_w, dense_b)
 
-    global GLOBAL_X, GLOBAL_Y
+    return GLOBAL_WORKER.train_mini_batch(
+        GLOBAL_X,
+        GLOBAL_Y,
+        idx_arr,
+        learning_rate=lr
+    )
 
-    worker = CNN_worker(
+
+def worker_init(x_train, y_train,
+                image_inputsize,
+                kernel_shape,
+                num_kernels,
+                pool_size,
+                stride,
+                output_size):
+
+    global GLOBAL_X, GLOBAL_Y, GLOBAL_WORKER
+
+    GLOBAL_X = x_train
+    GLOBAL_Y = y_train
+
+    GLOBAL_WORKER = CNN_worker(
         image_inputsize=image_inputsize,
         kernel_shape=kernel_shape,
         num_kernels=num_kernels,
@@ -34,20 +54,6 @@ def _run_worker_job(args):
         stride=stride,
         output_size=output_size
     )
-
-    worker.set_parameters(conv_k, conv_b, dense_w, dense_b)
-
-    return worker.train_mini_batch(
-        GLOBAL_X,
-        GLOBAL_Y,
-        idx_arr,
-        learning_rate=lr
-    )
-
-def worker_init(x_train, y_train):
-    global GLOBAL_X, GLOBAL_Y
-    GLOBAL_X = x_train
-    GLOBAL_Y = y_train
 
 
 

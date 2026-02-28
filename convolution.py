@@ -40,11 +40,17 @@ class Convolution():
         self.conv_out_shape = (self.depth, output_height, output_width)
         output = np.zeros(self.conv_out_shape)
 
-        for k in range(self.conv_out_shape[0]):
-            for i in range(output_height):
-                for j in range(output_width):
-                    region = self.padded[i:i+kh, j:j+kw]
-                    output[k, i, j] = np.sum(region * self.kernels[k]) + self.biases[k, 0, 0]
+        # for k in range(self.conv_out_shape[0]):
+        #     for i in range(output_height):
+        #         for j in range(output_width):
+        #             region = self.padded[i:i+kh, j:j+kw] 
+        #             # output[k,i,j] = np.sum(region * self.kernels[k]) + self.bias[k] 
+
+        for i in range(output_height):
+            for j in range(output_width):
+                region = self.padded[i:i+kh, j:j+kw]
+                output[:, i, j] = np.tensordot(self.kernels, region, axes=([1,2],[0,1])) + self.biases[:, 0, 0]
+
         # save pre-ReLU values
         self.pre_relu = output.copy()
 
@@ -106,6 +112,7 @@ class Convolution():
         ph, pw = self.pool_size
         sh, sw = self.pool_stride
 
+        kh, kw = self.kernels.shape[1], self.kernels.shape[2]
         # gradient to pass down
         dl_drelu = np.zeros_like(self.max_mask)
 
@@ -124,7 +131,7 @@ class Convolution():
         # dl_db and dl_dk calculation
         for k in range(self.dl_dk.shape[0]):
             # update bias gradient
-            self.dl_db[k] += np.sum(dl_dconv[k])
+            self.dl_db[k, 0, 0] += np.sum(dl_dconv[k])
             #  update kernel gradient
             for a in range(self.dl_dk.shape[1]):
                 for b in range(self.dl_dk.shape[2]):
@@ -137,7 +144,7 @@ class Convolution():
         # initialize input gradient
         input_gradient = np.zeros_like(self.padded)
         # calculate input gradient using dl_dconv and rotated kernels
-        kh, kw = self.kernels.shape[1], self.kernels.shape[2]
+
         for k in range(self.depth):
             for i in range(dl_dconv.shape[1]):   
                 for j in range(dl_dconv.shape[2]):
