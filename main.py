@@ -21,21 +21,23 @@ from cnn import CNN
 def main():
     # ---------- Reproducibility (optional) ----------
     np.random.seed(2)
-    # ---------- Load data ----------
-    output_class = 4
-    data = np.load(f'train_10x10_dataset_ysize={output_class}.npz')
-    x_train = data['images']
-    y_train = data['labels']
+    output_class = 3
     # print(f"Training data shape: {x_train.shape}, Training labels shape: {y_train.shape}")
 
     # ---------- Model hyperparams ----------
-    image_inputsize = (10, 10)
-    num_kernels = 10
+    image_inputsize = (15, 15)
     kernel_shape = (3, 3)
     pool_size = (2, 2)
     stride = (2, 2)
+    num_kernels = 10
+    data = np.load(f'train_{image_inputsize[0]}x{image_inputsize[1]}_dataset_ysize={output_class}.npz')
+    x_train = data['images']
+    y_train = data['labels']
     #Output classes
     output_size = (y_train.max()+1, 1)
+
+    # ---------- Load data ----------
+
 
     # ---------- Train ----------
     cnn_multicore = CNNMultiCore(
@@ -46,7 +48,7 @@ def main():
         pool_size=pool_size,
         stride=stride
     )
-    # #training parameters
+    # # #training parameters
     # epochs = 30
     # learning_rate = 0.01
 
@@ -59,16 +61,16 @@ def main():
     #     learning_rate=learning_rate
     # )
 
-    # # conv_k, conv_b, dense_w, dense_b = cnn_multicore.get_parameters()
-    # # np.savez(
-    # # f'trained_parameters_{num_kernels}xkernels_input{image_inputsize}_ysize={output_class}.npz',
-    # # conv_kernels=conv_k,
-    # # conv_biases=conv_b,
-    # # dense_weights=dense_w,
-    # # dense_biases=dense_b
-    # # )
+    # conv_k, conv_b, dense_w, dense_b = cnn_multicore.get_parameters()
+    # np.savez(
+    # f'trained_parameters_{num_kernels}xkernels_input{image_inputsize}_ysize={output_class}.npz',
+    # conv_kernels=conv_k,
+    # conv_biases=conv_b,
+    # dense_weights=dense_w,
+    # dense_biases=dense_b
+    # )
 
-    loaded_param = np.load(f'trained_parameters_{num_kernels}xkernels_input{image_inputsize}.npz')
+    loaded_param = np.load(f'trained_parameters_{num_kernels}xkernels_input{image_inputsize}_ysize={output_class}.npz')
     conv_k = loaded_param['conv_kernels']
     conv_b = loaded_param['conv_biases']
     dense_w = loaded_param['dense_weights']
@@ -82,7 +84,8 @@ def main():
         dense_biases=dense_b
     )
 
-    test_sample = np.load('test_indiv_10x10_dataset_ysize=4.npz')
+    test_sample = np.load(f'test_indiv_{image_inputsize[0]}x{image_inputsize[1]}_dataset_ysize={output_class}.npz')
+    #test_sample = np.load('test_indiv_{num_kernels}_dataset_ysize={image_inputsize}.npz')
     x_test = test_sample['images']
     y_test = test_sample['labels']
     count = 0
@@ -91,7 +94,8 @@ def main():
         pred_label = cnn_multicore.predict(x_test[i])
         if pred_label == y_test[i]:
             count += 1
-            # idx_arr.append(i)
+            if y_test[i] == 1:
+                idx_arr.append(i)
         else:
             idx_arr.append(i)
             pass

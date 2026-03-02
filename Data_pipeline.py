@@ -50,9 +50,9 @@ class DataPipeline:
     
 
 dp = DataPipeline(root_dir="Data")
-image_inputsize = (10, 10)
-# dp.load_and_npz_save("test", target_size=image_inputsize, max_class=4)
-# dp.load_and_npz_save(target_size=image_inputsize, max_class=4)
-dp.load_and_npz_save("test_indiv", target_size=image_inputsize, max_class=4)
+image_inputsize = (15, 15)
+# dp.load_and_npz_save("test", target_size=image_inputsize, max_class=3)
+# dp.load_and_npz_save(target_size=image_inputsize, max_class=3)
+dp.load_and_npz_save("test_indiv", target_size=image_inputsize, max_class=3)
 
 
