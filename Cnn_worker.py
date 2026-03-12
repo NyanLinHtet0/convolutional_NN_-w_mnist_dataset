@@ -81,7 +81,7 @@ class CNN_worker(CNN):
             model_loss = self.calculate_loss(label)
             loss_sum += float(model_loss)
             # backpropagation
-            self.backward(label)
+            self.backward()
 
         dense_gradient = self.dense_layer.get_gradient_parameters()
         convu_gradient = self.convolution_layer.get_gradient_parameters()

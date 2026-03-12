@@ -1,26 +1,22 @@
 import numpy as np
+import time
 from Convolution import *
 from Dense import *
 from Loss import *
 from Data_pipeline import *
 from cnn import CNN
 import matplotlib.pyplot as plt
-# from Mnist_data import *
-
-
-import numpy as np
-import matplotlib.pyplot as plt
-
-from cnn import CNN
-
 
 
 def main():
-    # ---------- Reproducibility (optional) ----------
+
+    start_time = time.perf_counter()
+
+    # ---------- Reproducibility ----------
     np.random.seed(2)
 
     # ---------- Load data ----------
-    data = np.load('train_10x10_dataset.npz')
+    data = np.load("train_10x10_dataset_ysize=2.npz")
     x_train = data['images']
     y_train = data['labels']
 
@@ -33,7 +29,7 @@ def main():
     pool_size = (2, 2)
     stride = (2, 2)
 
-    #Output classes
+    # Output classes
     output_size = (2, 1)
 
     # ---------- Build model ----------
@@ -64,13 +60,9 @@ def main():
     plt.title("Training Loss")
     plt.show()
 
+    end_time = time.perf_counter()
+    print(f"Total runtime: {end_time - start_time:.4f} seconds")
+
 
 if __name__ == "__main__":
     main()
-
-
-
-
-
-
-

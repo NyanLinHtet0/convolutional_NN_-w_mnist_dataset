@@ -30,7 +30,7 @@ class CNN:
     def calculate_loss(self, label):
         return self.loss.softmax_crossentropy(self.logits, label)
     
-    def backward(self, label):
+    def backward(self):
         output_gradient = self.loss.backward()
         dense_gradient = self.dense_layer.backward(output_gradient)
         convolution_gradient = self.convolution_layer.backward(dense_gradient)
@@ -80,7 +80,7 @@ class CNN:
                 epoch_loss_sum += float(model_loss)
 
                 # backpropagation
-                self.backward(label)
+                self.backward()
                 self.update_parameters(learning_rate=learning_rate)
 
             epoch_loss_avg = epoch_loss_sum / x_train.shape[0]
