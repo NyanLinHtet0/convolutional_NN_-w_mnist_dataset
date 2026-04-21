@@ -101,16 +101,16 @@ def main():
     np.random.seed(3)
 
     output_class = 10
-    image_inputsize = (28, 28)
+    image_inputsize = (20, 20)
     kernel_shape = (3, 3)
     pool_size = (2, 2)
     stride = (2, 2)
 
     widths = [32, 64]
-    hidden_layerwidths = [64, 32]
+    hidden_layerwidths = [128, 64]
 
-    epochs = 1
-    learning_rate = 0.005
+    epochs = 20
+    learning_rate = 0.01
     mini_batch_size = 64
     class_target = 0
 
@@ -127,7 +127,7 @@ def main():
 
     output_size = (int(y_train.max()) + 1, 1)
     num_classes = output_size[0]
-
+    
     cnn_multicore = CNNMultiCore(
         image_inputsize=image_inputsize,
         output_size=output_size,
