@@ -109,8 +109,8 @@ def main():
     widths = [32, 64]
     hidden_layerwidths = [128, 64]
 
-    epochs = 20
-    learning_rate = 0.01
+    epochs = 10
+    learning_rate = 0.005
     mini_batch_size = 64
     class_target = 0
 
