@@ -101,16 +101,16 @@ def main():
     np.random.seed(3)
 
     output_class = 10
-    image_inputsize = (10, 10)
+    image_inputsize = (28, 28)
     kernel_shape = (3, 3)
     pool_size = (2, 2)
     stride = (2, 2)
 
-    widths = [16, 32]
-    hidden_layerwidths = [64]
+    widths = [32, 64]
+    hidden_layerwidths = [64, 32]
 
-    epochs = 30
-    learning_rate = 0.01
+    epochs = 1
+    learning_rate = 0.005
     mini_batch_size = 64
     class_target = 0
 
@@ -141,22 +141,22 @@ def main():
         f"trained_parameters_widths={widths}_fc={hidden_layerwidths}_"
         f"input{image_inputsize}_ysize={output_class}.npz"
     )
-    
+    cnn_multicore.load_parameters(save_path)
 #------------------------------------------------------------------------------------------------------------------------------------#
 
-    # start_time = time.perf_counter()
+    start_time = time.perf_counter()
 
-    # epoch_loss_history, batch_loss_history = cnn_multicore.train_batches(
-    #     x_train=x_train,
-    #     y_train=y_train,
-    #     epochs=epochs,
-    #     mini_batch_size=mini_batch_size,
-    #     learning_rate=learning_rate,
-    # )
-    # end_time = time.perf_counter()
+    epoch_loss_history, batch_loss_history = cnn_multicore.train_batches(
+        x_train=x_train,
+        y_train=y_train,
+        epochs=epochs,
+        mini_batch_size=mini_batch_size,
+        learning_rate=learning_rate,
+    )
+    end_time = time.perf_counter()
 
-    # print(f"Training Time: {end_time - start_time:.4f} seconds")
-    # cnn_multicore.save_parameters(save_path)
+    print(f"Training Time: {end_time - start_time:.4f} seconds")
+    cnn_multicore.save_parameters(save_path)
 
 #-------------------------------------------------------------------------------------------------------------------------------------#
 

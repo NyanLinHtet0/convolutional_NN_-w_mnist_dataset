@@ -80,7 +80,7 @@ def infer_config_from_parameters(parameter_path, image_inputsize=(10, 10), pool_
 
 
 class DigitCanvasApp:
-    def __init__(self, model, image_inputsize=(10, 10), canvas_size=280, brush_radius=12):
+    def __init__(self, model, image_inputsize=(10, 10), canvas_size=280, brush_radius=15):
         self.model = model
         self.image_inputsize = tuple(image_inputsize)
         self.canvas_size = int(canvas_size)
@@ -356,7 +356,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Draw a digit and let your saved CNN predict it.")
     parser.add_argument(
         "--params",
-        default="trained_parameters_widths=[16, 32]_fc=[64]_input(10, 10)_ysize=10.npz",
+        default="trained_parameters_widths=[16, 32]_fc=[64, 32]_input(10, 10)_ysize=10.npz",
         help="Path to the saved .npz parameter file.",
     )
     parser.add_argument(
@@ -428,4 +428,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-    
+
