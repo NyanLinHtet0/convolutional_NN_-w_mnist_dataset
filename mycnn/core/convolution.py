@@ -12,8 +12,14 @@ class Convolution:
         self.width = int(width)
 
         kh, kw = self.kernel_shape
-        self.kernels = np.random.randn(self.width, self.input_depth, kh, kw)
-        self.biases = np.random.randn(self.width, 1, 1)
+
+        # He initialization for ReLU-based convolution layers
+        fan_in = self.input_depth * kh * kw
+        he_scale = np.sqrt(2.0 / fan_in)
+
+        self.kernels = np.random.randn(self.width, self.input_depth, kh, kw) * he_scale
+        self.biases = np.zeros((self.width, 1, 1))
+
         self.dl_dk = np.zeros_like(self.kernels)
         self.dl_db = np.zeros_like(self.biases)
 
