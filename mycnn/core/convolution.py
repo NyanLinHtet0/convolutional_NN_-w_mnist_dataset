@@ -65,8 +65,7 @@ class Convolution:
         output = np.einsum('kcpq,cijpq->kij', self.kernels, self.conv_windows)
         output += self.biases[:, 0, 0][:, None, None]
 
-        self.pre_relu = output.copy()
-        self.relu_mask = (self.pre_relu > 0).astype(output.dtype)
+        self.relu_mask = output > 0
         return np.maximum(0, output)
 
     def max_pool(self, input_data, pool_size=(2, 2), stride=(2, 2)):
@@ -79,6 +78,7 @@ class Convolution:
         self.pool_size = (ph, pw)
         self.pool_stride = (sh, sw)
         self.pool_input_was_2d = pooled_input_was_2d
+        self.pool_input_shape = input_data.shape
 
         output_height = (input_height - ph) // sh + 1
         output_width = (input_width - pw) // sw + 1
@@ -88,26 +88,30 @@ class Convolution:
         windows = sliding_window_view(input_data, (ph, pw), axis=(1, 2))
         windows = windows[:, ::sh, ::sw, :, :]
         windows = windows[:, :output_height, :output_width, :, :]
-        self.pool_windows_shape = windows.shape
 
-        flat_windows = windows.reshape(num_feature_maps, output_height, output_width, ph * pw)
+        flat_windows = windows.reshape(
+            num_feature_maps,
+            output_height,
+            output_width,
+            ph * pw,
+        )
+
         max_flat_idx = np.argmax(flat_windows, axis=-1)
-        output = np.take_along_axis(flat_windows, max_flat_idx[..., None], axis=-1)[..., 0]
+
+        output = np.take_along_axis(
+            flat_windows,
+            max_flat_idx[..., None],
+            axis=-1,
+        )[..., 0]
 
         base_rows = np.arange(output_height)[None, :, None] * sh
         base_cols = np.arange(output_width)[None, None, :] * sw
-        row_offsets = (max_flat_idx // pw)
-        col_offsets = (max_flat_idx % pw)
+
+        row_offsets = max_flat_idx // pw
+        col_offsets = max_flat_idx % pw
 
         self.max_rows = base_rows + row_offsets
         self.max_cols = base_cols + col_offsets
-        self.max_mask = np.zeros_like(input_data)
-
-        channel_idx = np.broadcast_to(
-            np.arange(num_feature_maps)[:, None, None],
-            (num_feature_maps, output_height, output_width),
-        )
-        np.add.at(self.max_mask, (channel_idx, self.max_rows, self.max_cols), 1)
 
         if pooled_input_was_2d:
             return output[0]
@@ -125,13 +129,18 @@ class Convolution:
         self.dl_dk += np.einsum('kij,cijpq->kcpq', dl_dconv, self.conv_windows)
 
         input_gradient = np.zeros_like(self.padded)
+
+        contribution = np.einsum(
+            "kij,kcab->cijab",
+            dl_dconv,
+            self.kernels,
+        )
+
         out_h, out_w = dl_dconv.shape[1], dl_dconv.shape[2]
 
         for a in range(kh):
             for b in range(kw):
-                input_gradient[:, a:a + out_h, b:b + out_w] += np.einsum(
-                    'kij,kc->cij', dl_dconv, self.kernels[:, :, a, b]
-                )
+                input_gradient[:, a:a + out_h, b:b + out_w] += contribution[:, :, :, a, b]
 
         pad = self.pad
         if pad > 0:
@@ -150,13 +159,22 @@ class Convolution:
         del learning_rate
 
         output_gradient = np.asarray(output_gradient).reshape(self.pool_out_shape)
-        dl_drelu = np.zeros_like(self.max_mask)
+
+        dl_drelu = np.zeros(self.pool_input_shape, dtype=output_gradient.dtype)
 
         channel_idx = np.broadcast_to(
-            np.arange(self.max_mask.shape[0])[:, None, None],
+            np.arange(self.pool_input_shape[0])[:, None, None],
             self.pool_out_shape,
         )
-        np.add.at(dl_drelu, (channel_idx, self.max_rows, self.max_cols), output_gradient)
+
+        if self.pool_size == self.pool_stride:
+            dl_drelu[channel_idx, self.max_rows, self.max_cols] = output_gradient
+        else:
+            np.add.at(
+                dl_drelu,
+                (channel_idx, self.max_rows, self.max_cols),
+                output_gradient,
+            )
 
         return self._backward_from_relu_grad(dl_drelu)
 
