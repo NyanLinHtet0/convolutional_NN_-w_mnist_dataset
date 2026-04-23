@@ -141,7 +141,6 @@ def main():
         f"trained_parameters_widths={widths}_fc={hidden_layerwidths}_"
         f"input{image_inputsize}_ysize={output_class}.npz"
     )
-    cnn_multicore.load_parameters(save_path)
 #------------------------------------------------------------------------------------------------------------------------------------#
 
     start_time = time.perf_counter()
