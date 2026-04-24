@@ -1,3 +1,5 @@
+import sys
+
 from digit_canvas import (
     AppConfig,
     FeatureMapViewConfig,
@@ -7,6 +9,8 @@ from digit_canvas import (
     run_digit_canvas_app,
     validate_parameter_file,
 )
+
+from digit_canvas.app_runner import parse_draw_map_args
 
 
 DEFAULT_PARAMETER_PATH = "trained_parameters_widths=[32, 64]_fc=[128, 64]_input(20, 20)_ysize=10.npz"
@@ -23,11 +27,21 @@ def main(
     app_config: AppConfig | None = None,
     feature_map_config: FeatureMapViewConfig | None = None,
 ):
+    show_maps, map_percent = parse_draw_map_args(sys.argv[1:])
+
     if app_config is None:
-        app_config = AppConfig()
+        app_config = AppConfig(
+            show_feature_maps=show_maps,
+        )
+    else:
+        app_config.show_feature_maps = show_maps
 
     if feature_map_config is None:
-        feature_map_config = FeatureMapViewConfig()
+        feature_map_config = FeatureMapViewConfig(
+            map_percent=map_percent,
+        )
+    else:
+        feature_map_config.map_percent = map_percent
 
     validate_parameter_file(parameter_path)
 
@@ -37,6 +51,7 @@ def main(
         pool_size=pool_size,
         stride=stride,
     )
+
     model = build_model(model_config)
 
     app = create_app(
@@ -45,6 +60,7 @@ def main(
         app_config=app_config,
         feature_map_config=feature_map_config,
     )
+
     run_digit_canvas_app(app)
 
 

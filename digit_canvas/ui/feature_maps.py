@@ -14,6 +14,8 @@ class FeatureMapsPanel(tk.Frame):
         map_padding: int = 12,
         section_padding: int = 24,
         max_columns: int | None = None,
+        map_percent: float | None = None,
+        random_seed: int | None = None,
     ):
         super().__init__(master)
 
@@ -23,6 +25,8 @@ class FeatureMapsPanel(tk.Frame):
         self.map_padding = int(map_padding)
         self.section_padding = int(section_padding)
         self.max_columns = max_columns
+        self.map_percent = self._clean_map_percent(map_percent)
+        self.rng = np.random.default_rng(random_seed)
 
         title = tk.Label(self, text="Convolution Feature Maps", font=("Arial", 11, "bold"))
         title.pack(anchor="w", pady=(0, 6))
@@ -85,8 +89,17 @@ class FeatureMapsPanel(tk.Frame):
                 continue
 
             channels, height, width = maps.shape
+            selected_indices = self._select_channel_indices(channels)
+            shown_count = len(selected_indices)
 
-            header = f"Conv Layer {layer_idx + 1} — {channels} map(s), each {height}x{width}"
+            if self.map_percent is None or self.map_percent >= 100:
+                header = f"Conv Layer {layer_idx + 1} — {channels} map(s), each {height}x{width}"
+            else:
+                header = (
+                    f"Conv Layer {layer_idx + 1} — showing {shown_count}/{channels} "
+                    f"random map(s), each {height}x{width}"
+                )
+
             self.canvas.create_text(
                 x_margin,
                 y_cursor,
@@ -97,20 +110,32 @@ class FeatureMapsPanel(tk.Frame):
             )
             y_cursor += 24
 
+            if shown_count <= 0:
+                self.canvas.create_text(
+                    x_margin,
+                    y_cursor,
+                    anchor="nw",
+                    text="No maps selected for this layer.",
+                    font=("Arial", 9),
+                    fill="#555555",
+                )
+                y_cursor += 24 + self.section_padding
+                continue
+
             tile_w = width * self.map_scale
             tile_h = height * self.map_scale
             cell_w = tile_w + self.map_padding
             cell_h = tile_h + 20 + self.map_padding
 
             cols = max(1, usable_width // max(cell_w, 1))
-            cols = min(cols, channels)
+            cols = min(cols, shown_count)
 
             if self.max_columns is not None:
                 cols = min(cols, int(self.max_columns))
 
-            for channel_idx in range(channels):
-                row = channel_idx // cols
-                col = channel_idx % cols
+            for display_idx, channel_idx in enumerate(selected_indices):
+                row = display_idx // cols
+                col = display_idx % cols
 
                 x0 = x_margin + col * cell_w
                 y0 = y_cursor + row * cell_h
@@ -130,12 +155,32 @@ class FeatureMapsPanel(tk.Frame):
                     y=y0 + 12,
                 )
 
-            rows = math.ceil(channels / cols)
+            rows = math.ceil(shown_count / cols)
             y_cursor += rows * cell_h + self.section_padding
 
         bbox = self.canvas.bbox("all")
         if bbox is not None:
             self.canvas.configure(scrollregion=bbox)
+
+    def _select_channel_indices(self, channels: int) -> list[int]:
+        channels = int(channels)
+        if channels <= 0:
+            return []
+
+        if self.map_percent is None or self.map_percent >= 100:
+            return list(range(channels))
+
+        if self.map_percent <= 0:
+            return []
+
+        select_count = math.floor(channels * (self.map_percent / 100.0))
+        select_count = max(0, min(channels, select_count))
+
+        if select_count <= 0:
+            return []
+
+        selected = self.rng.choice(channels, size=select_count, replace=False)
+        return sorted(int(idx) for idx in selected.tolist())
 
     def _draw_single_map(self, feature_map: np.ndarray, x: int, y: int):
         norm = self._normalize(feature_map)
@@ -169,6 +214,14 @@ class FeatureMapsPanel(tk.Frame):
                     outline="",
                     fill=color,
                 )
+
+    @staticmethod
+    def _clean_map_percent(map_percent: float | None) -> float | None:
+        if map_percent is None:
+            return None
+
+        percent = float(map_percent)
+        return max(0.0, min(100.0, percent))
 
     @staticmethod
     def _normalize(feature_map: np.ndarray) -> np.ndarray:

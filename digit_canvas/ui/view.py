@@ -14,7 +14,12 @@ class DigitCanvasView:
 
         self.root.title("CNN Digit Canvas Demo")
         self.root.geometry(f"{app_config.window_size[0]}x{app_config.window_size[1]}")
-        self.root.minsize(1200, 700)
+
+        if self._feature_maps_enabled():
+            self.root.minsize(1200, 700)
+        else:
+            self.root.minsize(500, 700)
+
         self.root.resizable(True, True)
 
         self.sequence_var = tk.StringVar(master=self.root, value="")
@@ -34,18 +39,27 @@ class DigitCanvasView:
 
         self._build_ui()
 
+    def _feature_maps_enabled(self) -> bool:
+        return bool(getattr(self.app_config, "show_feature_maps", False))
+
     def _build_ui(self):
-        main = tk.PanedWindow(self.root, orient=tk.HORIZONTAL, sashrelief=tk.RAISED)
-        main.pack(fill="both", expand=True)
+        if self._feature_maps_enabled():
+            main = tk.PanedWindow(self.root, orient=tk.HORIZONTAL, sashrelief=tk.RAISED)
+            main.pack(fill="both", expand=True)
 
-        left = tk.Frame(main)
-        right = tk.Frame(main)
+            left = tk.Frame(main)
+            right = tk.Frame(main)
 
-        main.add(left, minsize=self.app_config.left_panel_min_width)
-        main.add(right, minsize=self.app_config.right_panel_min_width)
+            main.add(left, minsize=self.app_config.left_panel_min_width)
+            main.add(right, minsize=self.app_config.right_panel_min_width)
 
+            self._build_left_panel(left)
+            self._build_right_panel(right)
+            return
+
+        left = tk.Frame(self.root)
+        left.pack(fill="both", expand=True)
         self._build_left_panel(left)
-        self._build_right_panel(right)
 
     def _build_left_panel(self, parent):
         canvas_frame = tk.Frame(parent)
@@ -137,6 +151,8 @@ class DigitCanvasView:
             map_padding=self.feature_map_config.map_padding,
             section_padding=self.feature_map_config.section_padding,
             max_columns=self.feature_map_config.max_columns,
+            map_percent=self.feature_map_config.map_percent,
+            random_seed=self.feature_map_config.random_seed,
         )
         self.feature_maps_panel.pack(fill="both", expand=True, padx=12, pady=12)
 
@@ -149,7 +165,13 @@ class DigitCanvasView:
                 self.preview.itemconfig(self.preview_rects[row][col], fill=color)
 
     def update_feature_maps(self, feature_maps):
+        if self.feature_maps_panel is None:
+            return
+
         self.feature_maps_panel.render(feature_maps)
 
     def clear_feature_maps(self):
+        if self.feature_maps_panel is None:
+            return
+
         self.feature_maps_panel.clear()

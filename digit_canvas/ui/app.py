@@ -31,6 +31,9 @@ class DigitCanvasApp:
 
         self._bind_events()
 
+    def _feature_maps_enabled(self) -> bool:
+        return bool(getattr(self.app_config, "show_feature_maps", False))
+
     def _bind_events(self):
         self.view.canvas.bind("<Button-1>", self._start_stroke)
         self.view.canvas.bind("<B1-Motion>", self._paint)
@@ -99,10 +102,16 @@ class DigitCanvasApp:
 
     def _predict_current_digit(self):
         small = self._prepare_input()
-        pred, feature_maps = predict_and_collect_feature_maps(self.model, small)
+
+        if self._feature_maps_enabled():
+            pred, feature_maps = predict_and_collect_feature_maps(self.model, small)
+            self.view.update_preview(small)
+            self.view.update_feature_maps(feature_maps)
+            return pred, small, feature_maps
+
+        pred = int(self.model.predict(small))
         self.view.update_preview(small)
-        self.view.update_feature_maps(feature_maps)
-        return pred, small, feature_maps
+        return pred, small, []
 
     def _refresh_prediction_only(self):
         if np.max(self.buffer) <= 0:
@@ -114,7 +123,7 @@ class DigitCanvasApp:
         pred, _, feature_maps = self._predict_current_digit()
         self.view.prediction_var.set(f"Current prediction: {pred}")
 
-        if not feature_maps:
+        if self._feature_maps_enabled() and not feature_maps:
             self.view.status_var.set(
                 "Prediction updated, but feature maps were not found. "
                 "If your CNN stores convolution layers differently, adjust feature_extractor.py."
@@ -129,7 +138,12 @@ class DigitCanvasApp:
         pred, _, feature_maps = self._predict_current_digit()
         self.view.prediction_var.set(f"Current prediction: {pred}")
 
-        if feature_maps:
+        if not self._feature_maps_enabled():
+            self.view.status_var.set(
+                "Prediction updated. Feature maps are disabled for this run. "
+                "Run draw.py maps to show all maps, or draw.py maps 50 to sample them."
+            )
+        elif feature_maps:
             self.view.status_var.set(
                 "Prediction updated and feature maps rendered. "
                 "Press Enter or Space to append it to the sequence."
